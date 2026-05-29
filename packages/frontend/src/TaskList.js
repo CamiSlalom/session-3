@@ -220,6 +220,18 @@ function TaskList({ onEdit }) {
                   }}
                 />
               )}
+              <Chip
+                label={task.priority || 'P3'}
+                size="small"
+                data-testid={`priority-badge-${task.id}`}
+                sx={{
+                  height: 20,
+                  fontSize: '0.7rem',
+                  fontWeight: 700,
+                  backgroundColor: '#07F2E6',
+                  color: '#fff',
+                }}
+              />
               <Box 
                 sx={{ 
                   display: 'flex', 

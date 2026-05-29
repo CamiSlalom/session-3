@@ -12,8 +12,8 @@ const server = setupServer(
     return res(
       ctx.status(200),
       ctx.json([
-        { id: 1, title: 'Test Task 1', description: 'Desc 1', due_date: '2025-09-30', completed: 0 },
-        { id: 2, title: 'Test Task 2', description: 'Desc 2', due_date: '2025-10-01', completed: 1 },
+        { id: 1, title: 'Test Task 1', description: 'Desc 1', due_date: '2025-09-30', completed: 0, priority: 'P1' },
+        { id: 2, title: 'Test Task 2', description: 'Desc 2', due_date: '2025-10-01', completed: 1, priority: 'P3' },
       ])
     );
   }),
@@ -35,6 +35,7 @@ const server = setupServer(
         description: req.body.description || '',
         due_date: req.body.due_date || null,
         completed: 0,
+        priority: req.body.priority || 'P3',
       })
     );
   }),
@@ -148,6 +149,45 @@ describe('TODO App', () => {
     });
     await waitFor(() => {
       expect(screen.getByText('No tasks found.')).toBeInTheDocument();
+    });
+  });
+
+  test('priority defaults to P3 and radio buttons are rendered', async () => {
+    await act(async () => {
+      render(<App />);
+    });
+    expect(screen.getByTestId('priority-P1')).toBeInTheDocument();
+    expect(screen.getByTestId('priority-P2')).toBeInTheDocument();
+    expect(screen.getByTestId('priority-P3')).toBeInTheDocument();
+  });
+
+  test('priority badge is displayed for tasks', async () => {
+    await act(async () => {
+      render(<App />);
+    });
+    await waitFor(() => {
+      expect(screen.getByTestId('priority-badge-1')).toBeInTheDocument();
+      expect(screen.getByTestId('priority-badge-1')).toHaveTextContent('P1');
+      expect(screen.getByTestId('priority-badge-2')).toHaveTextContent('P3');
+    });
+  });
+
+  test('new task without explicit priority defaults to P3', async () => {
+    let postedBody = null;
+    server.use(
+      rest.post('/api/tasks', (req, res, ctx) => {
+        postedBody = req.body;
+        return res(ctx.status(201), ctx.json({ id: 4, title: req.body.title, completed: 0, priority: req.body.priority || 'P3' }));
+      })
+    );
+    const user = userEvent.setup();
+    await act(async () => {
+      render(<App />);
+    });
+    await user.type(screen.getByTestId('title-input'), 'Priority Default Task');
+    await user.click(screen.getByTestId('submit-task'));
+    await waitFor(() => {
+      expect(postedBody?.priority).toBe('P3');
     });
   });
 });
